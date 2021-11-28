@@ -185,16 +185,13 @@
 
 (defvar *compiler-macros* (make-hash-table :size 100 :test #'eq))
 
-;;; Just who was responsible for the "FUNCALL" nonsense ?
-;;; Whoever it is deserves a slow and painful death ...
-
 (defmacro define-compiler-macro  (name arglist &body body &environment env)
   "Define a compiler-macro for NAME."
   (let* ((block-name name)
          (def-name (validate-function-name name)))
     (unless (eq def-name block-name)
       (setq block-name (cadr block-name)))
-    (let ((body (parse-macro-1 block-name arglist body env)))
+    (let ((body (parse-macro-2 block-name arglist body env)))
       `(eval-when (:compile-toplevel :load-toplevel :execute)
          (eval-when (:load-toplevel :execute)
            (record-source-file ',name 'compiler-macro))

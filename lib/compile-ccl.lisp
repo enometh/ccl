@@ -252,9 +252,9 @@
     dominance
     swank-loader
     remote-lisp
-    asdf
+ ;   asdf
     sockets
-    defsystem
+ ;   defsystem
     jp-encode
     cn-encode
     prefixed-stream

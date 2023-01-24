@@ -2015,7 +2015,7 @@ and (nthcdr *format-arguments-variance* *format-arguments*)")
               (if atsign (write-char #\+ stream)))
             (cond 
              ((< k 1)
-              (when (not (minusp spaceleft))(write-char #\0 stream))
+              (when (or (not w) (not  (minusp spaceleft))) (write-char #\0 stream))
               (write-char #\. stream)
               (dotimes (i (- k))
                 (write-char #\0 stream))

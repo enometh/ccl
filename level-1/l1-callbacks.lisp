@@ -25,7 +25,10 @@
 (defun define-callback-function (lisp-function  &optional doc-string (without-interrupts t) info &aux name trampoline)
   (unless (functionp lisp-function)
     (setq lisp-function (require-type lisp-function 'function)))
-  (unless (and (symbolp (setq name (function-name lisp-function)))
+  (if (and (consp (setq name (function-name lisp-function)))
+	   (eql (car name) :internal))
+      (setq name (second name)))
+  (unless (and (symbolp name)
                ;;Might as well err out now before do any _Newptr's...
                (not (constant-symbol-p name)))
     (report-bad-arg name '(and symbol (not (satisfies constantp)))))

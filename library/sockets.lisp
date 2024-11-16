@@ -576,7 +576,7 @@ the socket is not connected."))
     ((:file)
      (ecase type
        ((nil :stream) (apply #'make-stream-file-socket keys))
-       (:datagram (error "Datagram file sockets aren't implemented."))))
+       (:datagram (apply #'make-datagram-file-socket keys))))
     ((:internet :internet6)
      (ecase type
        (:stream (apply #'make-tcp-socket keys))
@@ -750,6 +750,48 @@ the socket is not connected."))
          socket)
     (unless (< fd 0)
       (fd-close fd))))
+
+;;madhu 241117
+#-windows-target
+(defun make-datagram-file-socket (&rest keys
+                                &key
+                                  (connect :active)
+                                  backlog
+                                  (fd -1)
+                                  local-filename
+                                  remote-filename
+                                &allow-other-keys)
+  (unwind-protect
+       (let (socket)
+         (when (< fd 0)
+           (setq fd (socket-call nil "socket" (c_socket #$PF_LOCAL
+                                                        #$SOCK_DGRAM 0))))
+         (apply #'%set-socket-options fd keys)
+         (ecase connect
+           (:passive
+            (unless local-filename
+              (error "need :local-filename argument to create server file ~
+                       stream socket"))
+            (let ((local (make-instance 'unix-socket-address
+                                        :path local-filename)))
+              (%socket-bind fd local)
+              (socket-call nil "listen" (c_listen fd (or backlog 5)))))
+           (:active
+            (unless remote-filename
+              (error "need :remote-filename argument to create client file ~
+                       stream socket"))
+            (let ((remote (make-instance 'unix-socket-address
+                                         :path remote-filename)))
+              (%socket-connect fd remote))))
+         (setq socket (apply (ecase connect
+                               (:active #'make-file-stream-socket)
+                               (:passive #'make-file-listener-socket))
+                             fd keys))
+         (setq fd -1)
+         socket)
+    (unless (< fd 0)
+      (fd-close fd))))
+
 
 (defun make-tcp-stream-socket (fd &rest keys &key &allow-other-keys)
   (apply #'make-tcp-stream fd keys))
